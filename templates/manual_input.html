@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manual Input - Crop Recommender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .input-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .input-group label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        .input-group input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 4px;
+            display: none;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .error {
+            color: #d32f2f;
+            margin-top: 4px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Manual Input Form</h1>
+        <p>Enter all the required parameters to get crop recommendations</p>
+    </div>
+    
+    <div class="input-container">
+        <div class="input-row">
+            <div class="input-group">
+                <label>Nitrogen (N):</label>
+                <input type="number" id="nitrogen" step="0.01" min="0" required>
+            </div>
+            <div class="input-group">
+                <label>Phosphorus (P):</label>
+                <input type="number" id="phosphorus" step="0.01" min="0" required>
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>Potassium (K):</label>
+                <input type="number" id="potassium" step="0.01" min="0" required>
+            </div>
+            <div class="input-group">
+                <label>Temperature (°C):</label>
+                <input type="number" id="temperature" step="0.01" required>
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>Humidity (%):</label>
+                <input type="number" id="humidity" min="0" max="100" step="0.01" required>
+            </div>
+            <div class="input-group">
+                <label>pH:</label>
+                <input type="number" id="ph" min="0" max="14" step="0.01" required>
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>Annual Rainfall (mm):</label>
+                <input type="number" id="rainfall" step="0.01" min="0" required>
+            </div>
+        </div>
+
+        <div class="button-container">
+            <button onclick="getRecommendations()">Get Crop Recommendations</button>
+        </div>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+        // Update the getRecommendations function
+        async function getRecommendations() {
+            const inputData = {
+                has_soil_report: true,
+                n: parseFloat(document.getElementById('nitrogen').value),
+                p: parseFloat(document.getElementById('phosphorus').value),
+                k: parseFloat(document.getElementById('potassium').value),
+                temperature: parseFloat(document.getElementById('temperature').value),
+                humidity: parseFloat(document.getElementById('humidity').value),
+                ph: parseFloat(document.getElementById('ph').value),
+                rainfall: parseFloat(document.getElementById('rainfall').value),
+                location: 'manual'
+            };
+
+            // Debug log
+           //console.log('Sending data:', inputData);
+
+            // Validate inputs
+            for (let key in inputData) {
+                if (isNaN(inputData[key]) && key !== 'location' && key !== 'has_soil_report') {
+                    alert('Please fill all fields with valid numbers');
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(inputData)
+                });
+
+                const data = await response.json();
+                console.log('Received data:', data);  // Debug log
+                
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                
+                if (data.error) {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                } else {
+                    let html = '<h3>Recommended Crops:</h3>';
+                    html += '<div style="margin-top: 10px;"><strong>Input Values:</strong></div>';
+                    html += `<pre style="background-color: #f5f5f5; padding: 10px; border-radius: 4px;">${JSON.stringify(data.input_data, null, 2)}</pre>`;
+                    
+                    // Add message if present
+                    if (data.message) {
+                        html += `<div style="margin: 10px 0; padding: 10px; background-color: #fff3e0; border-radius: 4px;">${data.message}</div>`;
+                    }
+                    
+                    html += '<ul style="list-style-type: none; padding: 0;">';
+                    data.recommendations.forEach((crop, index) => {
+                        html += `<li style="padding: 10px; margin: 5px 0; background-color: #e8f5e9; border-radius: 4px;">
+                            ${index + 1}. ${crop}</li>`;
+                    });
+                    html += '</ul>';
+                    resultDiv.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = 
+                    `<p style="color: red;">Error: Failed to get recommendations</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

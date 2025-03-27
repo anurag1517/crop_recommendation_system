@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crop Recommender</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .input-group { margin: 10px 0; }
+        label { display: block; margin: 5px 0; }
+        input, select { width: 100%; padding: 8px; margin: 5px 0; }
+        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        #result { margin-top: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; }
+        .data-display { margin: 10px 0; padding: 10px; background: #fff; border: 1px solid #eee; }
+        .weather-widget {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .weather-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .temperature {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .humidity {
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Crop Recommendation System</h1>
+    
+    <div style="text-align: right; margin: 20px;">
+        <a href="/manual-input" style="
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+        ">Manual Input</a>
+    </div>
+
+    <div class="weather-widget" id="weather-widget" style="display: none;">
+        <div class="weather-info">
+            <div>
+                <div class="temperature">-- °C</div>
+                <div class="humidity">Humidity: --%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Location Information</h2>
+        <div class="input-group">
+            <label>Enter City Name:</label>
+            <input type="text" id="location" placeholder="e.g., London, Mumbai, Tokyo" required>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Soil Information</h2>
+        <div class="input-group">
+            <label>Do you have a soil report?</label>
+            <input type="radio" name="soilReport" id="soilReportYes" onclick="toggleSoilReport(true)"> Yes
+            <input type="radio" name="soilReport" id="soilReportNo" onclick="toggleSoilReport(false)" checked> No
+        </div>
+
+        <div id="soilReportSection" style="display: none;">
+            <div class="input-group">
+                <label>Nitrogen (N) in kg/ha:</label>
+                <input type="number" id="n" step="0.1" required>
+            </div>
+            <div class="input-group">
+                <label>Phosphorus (P) in kg/ha:</label>
+                <input type="number" id="p" step="0.1" required>
+            </div>
+            <div class="input-group">
+                <label>Potassium (K) in kg/ha:</label>
+                <input type="number" id="k" step="0.1" required>
+            </div>
+            <div class="input-group">
+                <label>Soil pH (0-14):</label>
+                <input type="number" id="ph" min="0" max="14" step="0.1" required>
+            </div>
+        </div>
+
+        <div id="fertilizerSection">
+            <div class="input-group">
+                <label>Select Fertilizer:</label>
+                <select id="fertilizer" required>
+                    <option value="Urea (46-0-0)">Urea (46-0-0)</option>
+                    <option value="DAP (18-46-0)">DAP (18-46-0)</option>
+                    <option value="MOP (0-0-60)">MOP (0-0-60)</option>
+                    <option value="NPK 10-26-26">NPK 10-26-26</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Fertilizer Quantity (kg):</label>
+                <input type="number" id="quantity_kg" step="0.1" required>
+            </div>
+            <div class="input-group">
+                <label>Field Area (m²):</label>
+                <input type="number" id="area_m2" step="0.1" required>
+            </div>
+        </div>
+    </div>
+
+    <button onclick="getRecommendations()">Get Crop Recommendations</button>
+
+    <div id="result">
+        <!-- Results will be displayed here -->
+    </div>
+
+    <script>
+        function toggleSoilReport(hasReport) {
+            document.getElementById('soilReportSection').style.display = hasReport ? 'block' : 'none';
+            document.getElementById('fertilizerSection').style.display = hasReport ? 'none' : 'block';
+        }
+
+        async function getRecommendations() {
+            const input = {
+                location: document.getElementById('location').value,
+                has_soil_report: document.getElementById('soilReportYes').checked,
+                n: parseFloat(document.getElementById('n').value) || null,
+                p: parseFloat(document.getElementById('p').value) || null,
+                k: parseFloat(document.getElementById('k').value) || null,
+                ph: parseFloat(document.getElementById('ph').value) || null,
+                fertilizer: document.getElementById('fertilizer').value,
+                quantity_kg: parseFloat(document.getElementById('quantity_kg').value) || 0,
+                area_m2: parseFloat(document.getElementById('area_m2').value) || 0
+            };
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(input)
+                });
+                
+                const result = await response.json();
+                
+                if (result.error) {
+                    document.getElementById('result').innerHTML = `<div class="error">${result.error}</div>`;
+                    return;
+                }
+
+                // Display input data and recommendations
+                let html = `
+                    <h3>Input Parameters</h3>
+                    <div class="data-display">
+                        <strong>Location:</strong> ${input.location}<br>
+                        <strong>Temperature:</strong> ${result.input_data.temperature}°C<br>
+                        <strong>Humidity:</strong> ${result.input_data.humidity}%<br>
+                        <strong>Rainfall:</strong> ${result.input_data.rainfall} mm<br>
+                        <strong>Nitrogen (N):</strong> ${result.input_data.N} kg/ha<br>
+                        <strong>Phosphorus (P):</strong> ${result.input_data.P} kg/ha<br>
+                        <strong>Potassium (K):</strong> ${result.input_data.K} kg/ha<br>
+                        <strong>Soil pH:</strong> ${result.input_data.ph}
+                    </div>
+
+                    <h3>Recommended Crops</h3>
+                    <div class="data-display">
+                        <ol>
+                `;
+
+                result.recommendations.forEach(crop => {
+                    html += `<li>${crop}</li>`;
+                });
+
+                html += `
+                        </ol>
+                    </div>
+                    <small>Weather data: ${result.weather_status}</small>
+                `;
+
+                document.getElementById('result').innerHTML = html;
+
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        // Get user's location using browser geolocation
+        async function getWeatherForLocation() {
+            try {
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(async function(position) {
+                        const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&limit=1&appid=e6ea98b7ebe98a35a2408d05e0e2e46f`);
+                        const data = await response.json();
+                        if (data && data.length > 0) {
+                            const location = data[0].name;
+                            updateWeather(location);
+                        }
+                    });
+                } else {
+                    // Fallback to default location
+                    updateWeather('London');
+                }
+            } catch (error) {
+                console.error('Error getting location:', error);
+            }
+        }
+
+        async function updateWeather(location) {
+            try {
+                const response = await fetch(`/current-weather/${encodeURIComponent(location)}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    document.querySelector('.temperature').textContent = `${Math.round(data.temperature)}°C`;
+                    document.querySelector('.humidity').textContent = `Humidity: ${data.humidity}%`;
+                    document.getElementById('weather-widget').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error fetching weather:', error);
+            }
+        }
+
+        // Call this when page loads
+        document.addEventListener('DOMContentLoaded', getWeatherForLocation);
+    </script>
+</body>
+</html>
