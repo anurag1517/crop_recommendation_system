@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crop Recommender - Home</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --white: #ffffff;
+            --transition: 0.3s ease;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 0;
+            z-index: 1000;
+        }
+
+        .nav-menu {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .nav-item:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover:after {
+            width: 100%;
+            left: 0;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            min-width: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.5s ease;
+        }
+
+        .day {
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.3),
+                rgba(0, 0, 0, 0.3)
+            ), url('/static/images/farm-day.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .night {
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.5),
+                rgba(0, 0, 0, 0.5)
+            ), url('/static/images/farm-night.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .content-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+        }
+
+        .welcome-text {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            max-width: 800px;
+        }
+
+        .weather-panel {
+            position: fixed;
+            top: 100px;
+            right: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 999;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .weather-icon {
+            font-size: 3.5rem;
+            text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .night .weather-icon {
+            filter: brightness(0.9);
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .temp-info {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .temperature {
+            font-size: 3rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .description {
+            font-size: 1.2rem;
+            text-transform: capitalize;
+            margin-top: 5px;
+        }
+
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            font-size: 1.1rem;
+        }
+
+        .weather-detail {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .detail-icon {
+            font-size: 1.4rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="background" class="background-container"></div>
+
+    <nav class="nav-container">
+        <div class="nav-menu">
+            <a href="/" class="nav-item">Home</a>
+            <div class="dropdown">
+                <a class="nav-item">Recommendations ▾</a>
+                <div class="dropdown-content">
+                    <a href="/manual-input" class="dropdown-item">Manual Input</a>
+                    <a href="/location" class="dropdown-item">Location Based</a>
+                </div>
+            </div>
+            <a href="/companion-search" class="nav-item">Companion Crops</a>
+            <a href="/about" class="nav-item">About</a>
+            <a href="/contact" class="nav-item">Contact</a>
+        </div>
+    </nav>
+
+    <div class="weather-panel">
+        <div class="weather-main">
+            <div id="weather-icon" class="weather-icon"></div>
+            <div class="temp-info">
+                <div id="temperature" class="temperature"></div>
+                <div id="description" class="description"></div>
+            </div>
+        </div>
+        <div class="weather-details">
+            <div class="weather-detail">
+                <span class="detail-icon">💧</span>
+                <span id="humidity"></span>
+            </div>
+            <div class="weather-detail">
+                <span class="detail-icon">🌧️</span>
+                <span id="precipitation"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-container">
+        <h1 class="welcome-text">Welcome to Crop Recommender</h1>
+        <p class="subtitle">Get personalized crop recommendations based on your soil and weather conditions</p>
+    </div>
+
+    <script>
+        async function updateWeather() {
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                });
+
+                const response = await fetch(`/current-weather/${position.coords.latitude},${position.coords.longitude}`);
+                const data = await response.json();
+
+                if (data.error) throw new Error(data.error);
+
+                updateWeatherDisplay(data);
+                updateBackground();
+            } catch (error) {
+                console.error('Weather update failed:', error);
+            }
+        }
+
+        function getWeatherIcon(description) {
+            const hour = new Date().getHours();
+            const isNight = hour < 6 || hour > 18;
+
+            const weatherMap = {
+                'clear sky': isNight ? '🌕' : '☀️',
+                'few clouds': isNight ? '🌑' : '🌤️',
+                'scattered clouds': isNight ? '☁️' : '⛅',
+                'broken clouds': '☁️',
+                'overcast clouds': '☁️',
+                'light rain': isNight ? '🌧️' : '🌦️',
+                'moderate rain': '🌧️',
+                'heavy rain': '⛈️',
+                'thunderstorm': isNight ? '🌩️' : '⛈️',
+                'snow': '❄️',
+                'mist': '🌫️',
+                'fog': '🌫️',
+                'haze': isNight ? '🌫️' : '😶‍🌫️',
+                'dust': '💨',
+                'smoke': '💨',
+                'drizzle': isNight ? '🌧️' : '🌦️'
+            };
+
+            // Get weather condition and time-specific icon
+            const condition = Object.keys(weatherMap).find(key => 
+                description.toLowerCase().includes(key)
+            );
+
+            // Default icons based on time if no specific weather match
+            return weatherMap[condition] || (isNight ? '🌙' : '☀️');
+        }
+
+        function updateWeatherDisplay(data) {
+            const temperature = Math.round(data.temperature);
+            const description = data.description;
+            const humidity = data.humidity;
+            const precipitation = Math.round(data.precipitation || 0);
+
+            document.getElementById('temperature').textContent = `${temperature}°`;
+            document.getElementById('description').textContent = description;
+            document.getElementById('humidity').textContent = `${humidity}%`;
+            document.getElementById('precipitation').textContent = `${precipitation}%`;
+            document.getElementById('weather-icon').textContent = getWeatherIcon(description);
+        }
+
+        function updateBackground() {
+            const hour = new Date().getHours();
+            const isNight = hour < 6 || hour > 18;
+            const bg = document.getElementById('background');
+            bg.className = `background-container ${isNight ? 'night' : 'day'}`;
+        }
+
+        // Initialize
+        updateBackground();
+        updateWeather();
+
+        // Update every 5 minutes
+        setInterval(updateWeather, 300000);
+        setInterval(updateBackground, 60000);
+    </script>
+</body>
+</html>

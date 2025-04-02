@@ -2,196 +2,440 @@
 <html>
 <head>
     <title>Manual Input - Crop Recommender</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --accent-color: #FDD835;
+            --text-primary: #1A1A1A;
+            --text-secondary: #666666;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: var(--text-primary);
+        }
+
+        /* Update background styles */
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.5s ease;
+        }
+
+        .day {
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.3),
+                rgba(0, 0, 0, 0.3)
+            ), url('/static/images/farm-day.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .night {
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.5),
+                rgba(0, 0, 0, 0.5)
+            ), url('/static/images/farm-night.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        /* Update navigation and dropdown styles */
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 0;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-menu {
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
+
+        .nav-item {
+            position: relative;
+            color: white;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 8px 15px;
+            transition: var(--transition);
+            border-radius: 6px;
         }
-        .input-container {
+
+        .nav-item:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
             background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
         }
-        .input-row {
+
+        .nav-item:hover:after {
+            width: 100%;
+            left: 0;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            min-width: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Update container background transparency */
+        .manual-input-container {
+            max-width: 1000px;
+            margin: 100px auto 40px;
+            padding: 0 30px;
+            background: transparent;
+        }
+
+        /* Update header dashboard transparency */
+        .header-dashboard {
+            text-align: center;
+            padding: 40px;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-dashboard h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.8em;
+            color: var(--primary-dark);
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            margin-top: 15px;
+            font-weight: 400;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Update section transparency */
+        .section {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .input-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            position: relative;
             margin-bottom: 20px;
         }
-        .input-group {
-            display: flex;
-            flex-direction: column;
-        }
+
         .input-group label {
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #333;
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 1rem;
         }
+
         .input-group input {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+            width: 100%;
+            padding: 14px 16px;
+            padding-right: 60px; /* Make room for unit */
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            background: white;
+            transition: var(--transition);
+            box-sizing: border-box;
         }
-        .button-container {
-            text-align: center;
-            margin-top: 20px;
+
+        .input-group input:hover {
+            border-color: var(--primary-light);
         }
-        button {
-            background-color: #4CAF50;
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        }
+
+        .input-group .unit {
+            position: absolute;
+            right: 16px;
+            top: 42px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            background: white;
+            padding: 0 4px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
             color: white;
-            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            padding: 16px 40px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
+            transition: var(--transition);
+            font-family: 'Poppins', sans-serif;
+            margin: 0 auto;
+            display: block;
+            min-width: 250px;
         }
-        button:hover {
-            background-color: #45a049;
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(46, 125, 50, 0.25);
         }
-        #result {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 4px;
-            display: none;
-            background-color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .error {
-            color: #d32f2f;
-            margin-top: 4px;
-            font-size: 12px;
+
+        @media (max-width: 768px) {
+            .manual-input-container {
+                margin-top: 80px;
+                padding: 0 20px;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .full-width {
+                grid-column: span 1;
+            }
+
+            .header-dashboard h1 {
+                font-size: 2.2em;
+            }
+
+            .btn-primary {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Manual Input Form</h1>
-        <p>Enter all the required parameters to get crop recommendations</p>
+    <div id="background" class="background-container day"></div>
+
+    <nav class="nav-container">
+        <div class="nav-menu">
+            <a href="/" class="nav-item">Home</a>
+            <div class="dropdown">
+                <a class="nav-item">Recommendations ▾</a>
+                <div class="dropdown-content">
+                    <a href="/manual-input" class="dropdown-item">Manual Input</a>
+                    <a href="/location" class="dropdown-item">Location Based</a>
+                </div>
+            </div>
+            <a href="/companion-search" class="nav-item">Companion Crops</a>
+            <a href="/about" class="nav-item">About</a>
+            <a href="/contact" class="nav-item">Contact</a>
+        </div>
+    </nav>
+
+    <div class="manual-input-container">
+        <div class="header-dashboard">
+            <h1>Manual Input Form</h1>
+            <div class="header-subtitle">
+                Enter your soil and environmental parameters for precise crop recommendations
+            </div>
+        </div>
+
+        <div class="section">
+            <form onsubmit="event.preventDefault(); getRecommendations();">
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="nitrogen">Nitrogen (N)</label>
+                        <input type="number" id="nitrogen" step="0.1" min="0" required>
+                        <span class="unit">kg/ha</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="phosphorus">Phosphorus (P)</label>
+                        <input type="number" id="phosphorus" step="0.1" min="0" required>
+                        <span class="unit">kg/ha</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="potassium">Potassium (K)</label>
+                        <input type="number" id="potassium" step="0.1" min="0" required>
+                        <span class="unit">kg/ha</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="temperature">Temperature</label>
+                        <input type="number" id="temperature" step="0.1" required>
+                        <span class="unit">°C</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="humidity">Humidity</label>
+                        <input type="number" id="humidity" min="0" max="100" step="0.1" required>
+                        <span class="unit">%</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="ph">Soil pH Level</label>
+                        <input type="number" id="ph" min="0" max="14" step="0.1" required>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label for="rainfall">Annual Rainfall</label>
+                        <input type="number" id="rainfall" step="1" min="0" required>
+                        <span class="unit">mm</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    Generate Recommendations
+                </button>
+            </form>
+        </div>
     </div>
-    
-    <div class="input-container">
-        <div class="input-row">
-            <div class="input-group">
-                <label>Nitrogen (N):</label>
-                <input type="number" id="nitrogen" step="0.01" min="0" required>
-            </div>
-            <div class="input-group">
-                <label>Phosphorus (P):</label>
-                <input type="number" id="phosphorus" step="0.01" min="0" required>
-            </div>
-        </div>
-
-        <div class="input-row">
-            <div class="input-group">
-                <label>Potassium (K):</label>
-                <input type="number" id="potassium" step="0.01" min="0" required>
-            </div>
-            <div class="input-group">
-                <label>Temperature (°C):</label>
-                <input type="number" id="temperature" step="0.01" required>
-            </div>
-        </div>
-
-        <div class="input-row">
-            <div class="input-group">
-                <label>Humidity (%):</label>
-                <input type="number" id="humidity" min="0" max="100" step="0.01" required>
-            </div>
-            <div class="input-group">
-                <label>pH:</label>
-                <input type="number" id="ph" min="0" max="14" step="0.01" required>
-            </div>
-        </div>
-
-        <div class="input-row">
-            <div class="input-group">
-                <label>Annual Rainfall (mm):</label>
-                <input type="number" id="rainfall" step="0.01" min="0" required>
-            </div>
-        </div>
-
-        <div class="button-container">
-            <button onclick="getRecommendations()">Get Crop Recommendations</button>
-        </div>
-    </div>
-
-    <div id="result"></div>
 
     <script>
-        // Update the getRecommendations function
+        // Update background based on time of day
+        function updateBackground() {
+            const hour = new Date().getHours();
+            const bg = document.getElementById('background');
+            bg.className = `background-container ${hour >= 6 && hour < 18 ? 'day' : 'night'}`;
+        }
+
+        // Initial background update
+        updateBackground();
+        
+        // Update background every minute
+        setInterval(updateBackground, 60000);
+
         async function getRecommendations() {
-            const inputData = {
-                has_soil_report: true,
-                n: parseFloat(document.getElementById('nitrogen').value),
-                p: parseFloat(document.getElementById('phosphorus').value),
-                k: parseFloat(document.getElementById('potassium').value),
-                temperature: parseFloat(document.getElementById('temperature').value),
-                humidity: parseFloat(document.getElementById('humidity').value),
-                ph: parseFloat(document.getElementById('ph').value),
-                rainfall: parseFloat(document.getElementById('rainfall').value),
-                location: 'manual'
-            };
-
-            // Debug log
-           //console.log('Sending data:', inputData);
-
-            // Validate inputs
-            for (let key in inputData) {
-                if (isNaN(inputData[key]) && key !== 'location' && key !== 'has_soil_report') {
-                    alert('Please fill all fields with valid numbers');
-                    return;
-                }
-            }
-
             try {
+                // Collect all input values
+                const inputData = {
+                    location: 'manual', // Set location as 'manual'
+                    n: parseFloat(document.getElementById('nitrogen').value),
+                    p: parseFloat(document.getElementById('phosphorus').value),
+                    k: parseFloat(document.getElementById('potassium').value),
+                    temperature: parseFloat(document.getElementById('temperature').value),
+                    humidity: parseFloat(document.getElementById('humidity').value),
+                    ph: parseFloat(document.getElementById('ph').value),
+                    rainfall: parseFloat(document.getElementById('rainfall').value)
+                };
+
+                // Validate inputs
+                for (let key in inputData) {
+                    if (key === 'location') continue; // Skip validation for location field
+                    if (isNaN(inputData[key])) {
+                        alert('Please fill in all fields with valid numbers');
+                        return;
+                    }
+                }
+
                 const response = await fetch('/predict', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(inputData)
                 });
 
-                const data = await response.json();
-                console.log('Received data:', data);  // Debug log
-                
-                const resultDiv = document.getElementById('result');
-                resultDiv.style.display = 'block';
-                
-                if (data.error) {
-                    resultDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
-                } else {
-                    let html = '<h3>Recommended Crops:</h3>';
-                    html += '<div style="margin-top: 10px;"><strong>Input Values:</strong></div>';
-                    html += `<pre style="background-color: #f5f5f5; padding: 10px; border-radius: 4px;">${JSON.stringify(data.input_data, null, 2)}</pre>`;
-                    
-                    // Add message if present
-                    if (data.message) {
-                        html += `<div style="margin: 10px 0; padding: 10px; background-color: #fff3e0; border-radius: 4px;">${data.message}</div>`;
-                    }
-                    
-                    html += '<ul style="list-style-type: none; padding: 0;">';
-                    data.recommendations.forEach((crop, index) => {
-                        html += `<li style="padding: 10px; margin: 5px 0; background-color: #e8f5e9; border-radius: 4px;">
-                            ${index + 1}. ${crop}</li>`;
-                    });
-                    html += '</ul>';
-                    resultDiv.innerHTML = html;
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+
+                const result = await response.json();
+
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                // Store the results in sessionStorage
+                sessionStorage.setItem('cropRecommendations', JSON.stringify({
+                    input_parameters: result.input_data,
+                    recommendations: result.recommendations
+                }));
+
+                // Redirect to recommendations page
+                window.location.href = '/recommendations';
+
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('result').innerHTML = 
-                    `<p style="color: red;">Error: Failed to get recommendations</p>`;
+                alert('Error getting recommendations: ' + error.message);
             }
         }
     </script>

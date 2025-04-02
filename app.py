@@ -1,10 +1,20 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, url_for
 import joblib
 import pandas as pd
 import requests
 import numpy as np
+from dotenv import load_dotenv
+import os
+import google.generativeai as genai
+from PIL import Image
+from io import BytesIO
 
-app = Flask(__name__)
+load_dotenv()
+
+app = Flask(__name__, static_folder='static')
+
+# Ensure static folder exists
+os.makedirs('static/images', exist_ok=True)
 
 # Load model, training labels, and preprocessing objects
 model_data = joblib.load('models/knn_model.pkl')
@@ -12,6 +22,12 @@ knn_model = model_data['model']
 y_train = model_data['y_train']  # Original training labels
 scaler = joblib.load('models/scaler.pkl')
 ohe = joblib.load('models/ohe.pkl')
+
+# Load clustering model
+cluster_data = joblib.load('models/cluster_model.pkl')
+clustering = cluster_data['model']
+cluster_scaler = cluster_data['scaler']
+crop_clusters = cluster_data['crop_clusters']
 
 # Load dataset for median pH calculation
 df = pd.read_csv('Crop_recommendation.csv')  # Replace with your dataset
@@ -26,7 +42,15 @@ FERTILIZER_DB = {
 }
 
 # OpenWeatherMap API (get free key: https://openweathermap.org/api)
-OWM_API_KEY = "e6ea98b7ebe98a35a2408d05e0e2e46f"
+OWM_API_KEY = os.getenv('OWM_API_KEY', 'e6ea98b7ebe98a35a2408d05e0e2e46f')
+
+# Gemini API configuration
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyA3g2I-fojjpQe7PKGyAfNyuXvlY1hEgI0')
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel('gemini-1.5-pro')  # Updated model version
+
+# Add Pexels API key to your environment variables
+PEXELS_API_KEY = os.getenv('OPwkrG284pQMF30G41QenRzehC4kUYHSkWkqESF8qTFcMuvq1vYBUy1x')
 
 def get_soil_ph(lat, lon):
     """Fetch soil pH data from SoilGrids API"""
@@ -89,9 +113,63 @@ def calculate_npk(fertilizer, quantity_kg, area_m2):
     
     return round(n, 2), round(p, 2), round(k, 2)
 
+def get_crop_image(crop_name):
+    """Fetch crop image using multiple services"""
+    try:
+        # Try Pexels API first
+        url = "https://api.pexels.com/v1/search"
+        headers = {
+            "Authorization": PEXELS_API_KEY
+        }
+        params = {
+            "query": f"{crop_name} plant agriculture field",
+            "per_page": 1,
+            "size": "medium",
+            "orientation": "square"
+        }
+        
+        response = requests.get(url, headers=headers, params=params)
+        data = response.json()
+        
+        if response.status_code == 200 and data.get('photos'):
+            return {
+                'status': 'success',
+                'image_url': data['photos'][0]['src']['medium']
+            }
+        
+        # If Pexels fails, try direct Unsplash URL
+        unsplash_url = f"https://source.unsplash.com/400x400/?{crop_name},agriculture"
+        response = requests.head(unsplash_url)
+        if response.status_code == 200:
+            return {
+                'status': 'success',
+                'image_url': unsplash_url
+            }
+            
+        # Final fallback to placeholder
+        return {
+            'status': 'success',
+            'image_url': f'https://placehold.co/400x400/png?text={crop_name}'
+        }
+            
+    except Exception as e:
+        print(f"Image fetch error for {crop_name}: {str(e)}")
+        return {
+            'status': 'error',
+            'image_url': f'https://placehold.co/400x400/png?text={crop_name}'
+        }
+
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('home.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -195,19 +273,33 @@ def predict():
         print("Prediction Error:", str(e))
         return jsonify({'error': str(e)}), 500
 
-@app.route('/current-weather/<location>', methods=['GET'])
+
+@app.route('/current-weather/<location>')
 def current_weather(location):
-    """Get current weather for location"""
     try:
-        weather = get_weather(location)
-        if weather['status'] == 'success':
+        lat, lon = location.split(',')
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={OWM_API_KEY}&units=metric"
+        
+        response = requests.get(url, timeout=5)
+        data = response.json()
+        
+        if response.status_code == 200:
+            # Calculate precipitation chance based on clouds and humidity
+            precipitation = min(100, (data['clouds']['all'] + data['main']['humidity']) / 2)
+            
             return jsonify({
-                'temperature': weather['temperature'],
-                'humidity': weather['humidity'],
-                'status': 'success'
+                'status': 'success',
+                'temperature': data['main']['temp'],
+                'description': data['weather'][0]['description'],
+                'humidity': data['main']['humidity'],
+                'precipitation': precipitation,
+                'rainfall': data.get('rain', {}).get('1h', 0)
             })
-        return jsonify({'error': 'Failed to fetch weather data'}), 500
+        
+        return jsonify({'error': 'Failed to fetch weather data'})
+
     except Exception as e:
+        print("Weather API Error:", str(e))
         return jsonify({'error': str(e)}), 500
 
 @app.route('/manual-input')
@@ -215,5 +307,66 @@ def manual_input():
     """Render manual input form"""
     return render_template('manual_input.html')
 
+@app.route('/recommendations')
+def show_recommendations():
+    """Route to display recommendations"""
+    return render_template('recommendations.html')
+
+@app.route('/companion-crops', methods=['POST'])
+def get_companion_crops():
+    try:
+        data = request.json
+        crop_name = data.get('crop')
+        
+        # Find the cluster for the input crop
+        crop_info = next((item for item in crop_clusters if item['label'] == crop_name), None)
+        
+        if not crop_info:
+            return jsonify({'error': 'Crop not found'}), 404
+            
+        cluster_id = crop_info['cluster']
+        
+        # Get unique companion crops using set
+        companion_crops = list({
+            item['label'] 
+            for item in crop_clusters 
+            if item['cluster'] == cluster_id and item['label'] != crop_name
+        })
+        
+        # Sort alphabetically for consistent output
+        companion_crops.sort()
+        
+        # Take only top 5 if more exist
+        companion_crops = companion_crops[:5]
+        
+        # Only include growing_conditions if no companion crops found
+        response_data = {
+            'input_crop': crop_name,
+            'companion_crops': companion_crops
+        }
+        
+        if not companion_crops:
+            response_data['growing_conditions'] = 'No companion crops found with similar growing conditions'
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/companion-search')
+def companion_search():
+    """Render companion crops search page"""
+    return render_template('companion_search.html')
+
+@app.route('/location-input')
+def location_input():
+    return render_template('location_input.html')
+
+@app.route('/location')
+def location_based():
+    """Route for location based recommendations"""
+    return render_template('index.html')
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)

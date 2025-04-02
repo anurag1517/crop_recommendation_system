@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crop Recommendations</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --background-color: #f5f5f5;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --transition-speed: 0.3s;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: #333;
+        }
+
+        .nav-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-bottom: 40px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .nav-bar a {
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all var(--transition-speed);
+            font-weight: 500;
+        }
+
+        .nav-bar a:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .parameters-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .parameter-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .crops-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .crop-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .crop-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .nav-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .parameters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .crops-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="back-button">← Back to Input</a>
+    <h1>Crop Recommendations</h1>
+    
+    <div id="recommendations"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const data = JSON.parse(sessionStorage.getItem('cropRecommendations'));
+            if (!data) {
+                window.location.href = '/manual-input';
+                return;
+            }
+
+            let html = '<div class="parameters-section">';
+            html += '<h2>Input Parameters</h2>';
+            html += '<div class="parameters-grid">';
+            
+            for (const [key, value] of Object.entries(data.input_parameters)) {
+                html += `
+                    <div class="parameter-item">
+                        <strong>${key}:</strong> ${value}
+                    </div>`;
+            }
+            
+            html += '</div></div>';
+
+            html += '<div class="crops-grid">';
+            
+            data.recommendations.forEach(crop => {
+                html += `
+                    <div class="crop-card">
+                        <div class="crop-name">${crop}</div>
+                    </div>`;
+            });
+            
+            html += '</div>';
+            
+            document.getElementById('recommendations').innerHTML = html;
+        });
+    </script>
+</body>
+</html>

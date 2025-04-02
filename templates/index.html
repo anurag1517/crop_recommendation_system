@@ -3,142 +3,444 @@
 <head>
     <title>Crop Recommender</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-        .input-group { margin: 10px 0; }
-        label { display: block; margin: 5px 0; }
-        input, select { width: 100%; padding: 8px; margin: 5px 0; }
-        button { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-        #result { margin-top: 20px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; }
-        .data-display { margin: 10px 0; padding: 10px; background: #fff; border: 1px solid #eee; }
-        .weather-widget {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --white: #ffffff;
+            --transition: 0.3s ease;
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --card-shadow: 0 8px 20px rgba(0,0,0,0.1);
         }
-        .weather-info {
+
+        /* Background Container */
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.5s ease;
+        }
+
+        .day {
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.3),
+                rgba(0, 0, 0, 0.3)
+            ), url('/static/images/farm-day.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .night {
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.5),
+                rgba(0, 0, 0, 0.5)
+            ), url('/static/images/farm-night.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        /* Navigation Styles */
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 0;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-menu {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .nav-item {
+            color: white;
+            text-decoration: none;
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: var(--transition);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .nav-item:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover:after {
+            width: 100%;
+            left: 0;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            min-width: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Content Styles */
+        .container {
+            max-width: 1000px;
+            margin: 100px auto 40px;
+            background: transparent;
+            position: relative;
+        }
+
+        .header-dashboard {
+            text-align: center;
+            padding: 30px;
+            margin-bottom: 40px;
+            background: var(--glass-bg);
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .header-dashboard h1 {
+            font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+            color: var(--primary-dark);
+            font-size: 2.8em;
+            margin: 0;
+            padding: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: 0.5px;
+        }
+
+        .header-subtitle {
+            font-family: 'Open Sans', 'Segoe UI', Arial, sans-serif;
+            color: #555;
+            font-size: 1.2em;
+            margin-top: 10px;
+            font-weight: 300;
+        }
+
+        .section {
+            background: var(--glass-bg);
+            margin: 30px 0;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            transform: translateY(0);
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .section:hover {
+            transform: translateY(-5px);
+        }
+
+        .section h2 {
+            color: var(--primary-color);
+            margin-top: 0;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            margin: 20px 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: var(--transition);
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+        }
+
+        .radio-group label {
             display: flex;
             align-items: center;
-            gap: 10px;
+            cursor: pointer;
         }
-        .temperature {
-            font-size: 24px;
-            font-weight: bold;
+
+        input[type="radio"] {
+            margin-right: 8px;
+            cursor: pointer;
         }
-        .humidity {
-            font-size: 16px;
-            color: #666;
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: block;
+            margin: 40px auto;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        #fertilizerSection, #soilReportSection {
+            padding: 20px;
+            background: rgba(248, 249, 250, 0.9);
+            border-radius: 10px;
+            margin-top: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .nav-menu {
+                gap: 1rem;
+                padding: 0 1rem;
+            }
+
+            .nav-item {
+                font-size: 1rem;
+                padding: 8px 12px;
+            }
+
+            .container {
+                margin: 80px auto 20px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Crop Recommendation System</h1>
-    
-    <div style="text-align: right; margin: 20px;">
-        <a href="/manual-input" style="
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 4px;
-        ">Manual Input</a>
-    </div>
+    <div id="background" class="background-container day"></div>
 
-    <div class="weather-widget" id="weather-widget" style="display: none;">
-        <div class="weather-info">
-            <div>
-                <div class="temperature">-- °C</div>
-                <div class="humidity">Humidity: --%</div>
+    <nav class="nav-container">
+        <div class="nav-menu">
+            <a href="/" class="nav-item">Home</a>
+            <div class="dropdown">
+                <a class="nav-item">Recommendations ▾</a>
+                <div class="dropdown-content">
+                    <a href="/manual-input" class="dropdown-item">Manual Input</a>
+                    <a href="/location" class="dropdown-item">Location Based</a>
+                </div>
             </div>
+            <a href="/companion-search" class="nav-item">Companion Crops</a>
+            <a href="/about" class="nav-item">About</a>
+            <a href="/contact" class="nav-item">Contact</a>
         </div>
-    </div>
+    </nav>
 
-    <div class="section">
-        <h2>Location Information</h2>
-        <div class="input-group">
-            <label>Enter City Name:</label>
-            <input type="text" id="location" placeholder="e.g., London, Mumbai, Tokyo" required>
+    <div class="container">
+        <div class="header-dashboard">
+            <h1>🌱 Smart Crop Recommender</h1>
+            <div class="header-subtitle">Get personalized crop recommendations based on your soil conditions</div>
         </div>
-    </div>
-
-    <div class="section">
-        <h2>Soil Information</h2>
-        <div class="input-group">
-            <label>Do you have a soil report?</label>
-            <input type="radio" name="soilReport" id="soilReportYes" onclick="toggleSoilReport(true)"> Yes
-            <input type="radio" name="soilReport" id="soilReportNo" onclick="toggleSoilReport(false)" checked> No
-        </div>
-
-        <div id="soilReportSection" style="display: none;">
+        
+        <div class="section">
+            <h2>📍 Location Information</h2>
             <div class="input-group">
-                <label>Nitrogen (N) in kg/ha:</label>
-                <input type="number" id="n" step="0.1" required>
-            </div>
-            <div class="input-group">
-                <label>Phosphorus (P) in kg/ha:</label>
-                <input type="number" id="p" step="0.1" required>
-            </div>
-            <div class="input-group">
-                <label>Potassium (K) in kg/ha:</label>
-                <input type="number" id="k" step="0.1" required>
-            </div>
-            <div class="input-group">
-                <label>Soil pH (0-14):</label>
-                <input type="number" id="ph" min="0" max="14" step="0.1" required>
+                <label>Enter City Name:</label>
+                <input type="text" id="location" placeholder="e.g., London, Mumbai, Tokyo" required>
             </div>
         </div>
 
-        <div id="fertilizerSection">
+        <div class="section">
+            <h2>🌿 Soil Information</h2>
             <div class="input-group">
-                <label>Select Fertilizer:</label>
-                <select id="fertilizer" required>
-                    <option value="Urea (46-0-0)">Urea (46-0-0)</option>
-                    <option value="DAP (18-46-0)">DAP (18-46-0)</option>
-                    <option value="MOP (0-0-60)">MOP (0-0-60)</option>
-                    <option value="NPK 10-26-26">NPK 10-26-26</option>
-                </select>
+                <label>Do you have a soil report?</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="soilReport" id="soilReportYes" onclick="toggleSoilReport(true)"> Yes
+                    </label>
+                    <label>
+                        <input type="radio" name="soilReport" id="soilReportNo" onclick="toggleSoilReport(false)" checked> No
+                    </label>
+                </div>
             </div>
-            <div class="input-group">
-                <label>Fertilizer Quantity (kg):</label>
-                <input type="number" id="quantity_kg" step="0.1" required>
+
+            <div id="soilReportSection" style="display: none;">
+                <div class="input-group">
+                    <label>Nitrogen (N) in kg/ha:</label>
+                    <input type="number" id="n" step="0.1" required>
+                </div>
+                <div class="input-group">
+                    <label>Phosphorus (P) in kg/ha:</label>
+                    <input type="number" id="p" step="0.1" required>
+                </div>
+                <div class="input-group">
+                    <label>Potassium (K) in kg/ha:</label>
+                    <input type="number" id="k" step="0.1" required>
+                </div>
+                <div class="input-group">
+                    <label>Soil pH (0-14):</label>
+                    <input type="number" id="ph" min="0" max="14" step="0.1" required>
+                </div>
             </div>
-            <div class="input-group">
-                <label>Field Area (m²):</label>
-                <input type="number" id="area_m2" step="0.1" required>
+
+            <div id="fertilizerSection">
+                <div class="input-group">
+                    <label>Select Fertilizer:</label>
+                    <select id="fertilizer" required>
+                        <option value="Urea (46-0-0)">Urea (46-0-0)</option>
+                        <option value="DAP (18-46-0)">DAP (18-46-0)</option>
+                        <option value="MOP (0-0-60)">MOP (0-0-60)</option>
+                        <option value="NPK 10-26-26">NPK 10-26-26</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Fertilizer Quantity (kg):</label>
+                    <input type="number" id="quantity_kg" step="0.1" required>
+                </div>
+                <div class="input-group">
+                    <label>Field Area (m²):</label>
+                    <input type="number" id="area_m2" step="0.1" required>
+                </div>
             </div>
         </div>
-    </div>
 
-    <button onclick="getRecommendations()">Get Crop Recommendations</button>
-
-    <div id="result">
-        <!-- Results will be displayed here -->
+        <button onclick="getRecommendations()">Get Crop Recommendations 🌾</button>
     </div>
 
     <script>
+        // Background Update Logic
+        function updateBackground() {
+            const hour = new Date().getHours();
+            const isNight = hour < 6 || hour > 18;
+            const bg = document.getElementById('background');
+            bg.className = `background-container ${isNight ? 'night' : 'day'}`;
+        }
+
+        // Initialize background
+        updateBackground();
+        setInterval(updateBackground, 60000);
+
+        // Existing Form Functions
         function toggleSoilReport(hasReport) {
             document.getElementById('soilReportSection').style.display = hasReport ? 'block' : 'none';
             document.getElementById('fertilizerSection').style.display = hasReport ? 'none' : 'block';
         }
 
         async function getRecommendations() {
-            const input = {
-                location: document.getElementById('location').value,
-                has_soil_report: document.getElementById('soilReportYes').checked,
-                n: parseFloat(document.getElementById('n').value) || null,
-                p: parseFloat(document.getElementById('p').value) || null,
-                k: parseFloat(document.getElementById('k').value) || null,
-                ph: parseFloat(document.getElementById('ph').value) || null,
-                fertilizer: document.getElementById('fertilizer').value,
-                quantity_kg: parseFloat(document.getElementById('quantity_kg').value) || 0,
-                area_m2: parseFloat(document.getElementById('area_m2').value) || 0
-            };
-
             try {
+                const location = document.getElementById('location').value;
+                if (!location) {
+                    alert('Please enter a location');
+                    return;
+                }
+
+                const input = {
+                    location: location,
+                    has_soil_report: document.getElementById('soilReportYes').checked
+                };
+
+                if (input.has_soil_report) {
+                    const n = document.getElementById('n').value;
+                    const p = document.getElementById('p').value;
+                    const k = document.getElementById('k').value;
+                    const ph = document.getElementById('ph').value;
+
+                    if (!n || !p || !k || !ph) {
+                        alert('Please fill in all soil report values');
+                        return;
+                    }
+
+                    input.n = parseFloat(n);
+                    input.p = parseFloat(p);
+                    input.k = parseFloat(k);
+                    input.ph = parseFloat(ph);
+                } else {
+                    const quantity = document.getElementById('quantity_kg').value;
+                    const area = document.getElementById('area_m2').value;
+
+                    if (!quantity || !area) {
+                        alert('Please fill in fertilizer quantity and area');
+                        return;
+                    }
+
+                    input.fertilizer = document.getElementById('fertilizer').value;
+                    input.quantity_kg = parseFloat(quantity);
+                    input.area_m2 = parseFloat(area);
+                }
+
                 const response = await fetch('/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -148,84 +450,22 @@
                 const result = await response.json();
                 
                 if (result.error) {
-                    document.getElementById('result').innerHTML = `<div class="error">${result.error}</div>`;
-                    return;
+                    throw new Error(result.error);
                 }
 
-                // Display input data and recommendations
-                let html = `
-                    <h3>Input Parameters</h3>
-                    <div class="data-display">
-                        <strong>Location:</strong> ${input.location}<br>
-                        <strong>Temperature:</strong> ${result.input_data.temperature}°C<br>
-                        <strong>Humidity:</strong> ${result.input_data.humidity}%<br>
-                        <strong>Rainfall:</strong> ${result.input_data.rainfall} mm<br>
-                        <strong>Nitrogen (N):</strong> ${result.input_data.N} kg/ha<br>
-                        <strong>Phosphorus (P):</strong> ${result.input_data.P} kg/ha<br>
-                        <strong>Potassium (K):</strong> ${result.input_data.K} kg/ha<br>
-                        <strong>Soil pH:</strong> ${result.input_data.ph}
-                    </div>
+                const recommendationsData = {
+                    input_parameters: result.input_data,
+                    recommendations: result.recommendations
+                };
 
-                    <h3>Recommended Crops</h3>
-                    <div class="data-display">
-                        <ol>
-                `;
-
-                result.recommendations.forEach(crop => {
-                    html += `<li>${crop}</li>`;
-                });
-
-                html += `
-                        </ol>
-                    </div>
-                    <small>Weather data: ${result.weather_status}</small>
-                `;
-
-                document.getElementById('result').innerHTML = html;
+                sessionStorage.setItem('cropRecommendations', JSON.stringify(recommendationsData));
+                window.location.href = '/recommendations';
 
             } catch (error) {
-                document.getElementById('result').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
             }
         }
-
-        // Get user's location using browser geolocation
-        async function getWeatherForLocation() {
-            try {
-                if ("geolocation" in navigator) {
-                    navigator.geolocation.getCurrentPosition(async function(position) {
-                        const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&limit=1&appid=e6ea98b7ebe98a35a2408d05e0e2e46f`);
-                        const data = await response.json();
-                        if (data && data.length > 0) {
-                            const location = data[0].name;
-                            updateWeather(location);
-                        }
-                    });
-                } else {
-                    // Fallback to default location
-                    updateWeather('London');
-                }
-            } catch (error) {
-                console.error('Error getting location:', error);
-            }
-        }
-
-        async function updateWeather(location) {
-            try {
-                const response = await fetch(`/current-weather/${encodeURIComponent(location)}`);
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    document.querySelector('.temperature').textContent = `${Math.round(data.temperature)}°C`;
-                    document.querySelector('.humidity').textContent = `Humidity: ${data.humidity}%`;
-                    document.getElementById('weather-widget').style.display = 'block';
-                }
-            } catch (error) {
-                console.error('Error fetching weather:', error);
-            }
-        }
-
-        // Call this when page loads
-        document.addEventListener('DOMContentLoaded', getWeatherForLocation);
     </script>
 </body>
 </html>

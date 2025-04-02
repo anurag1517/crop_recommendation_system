@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contact Us - Crop Recommender</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-dark: #388E3C;
+            --text-color: #333;
+            --background-color: #f5f5f5;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --transition: 0.3s ease;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 80px auto;
+            padding: 20px;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: var(--card-shadow);
+            z-index: 1000;
+        }
+
+        .nav-menu {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            padding: 15px;
+            gap: 30px;
+        }
+
+        .nav-item {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: var(--transition);
+        }
+
+        .nav-item:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .contact-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+        }
+
+        h1 {
+            color: var(--primary-dark);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .contact-form {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: grid;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        input, textarea {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+        }
+
+        .contact-info {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .contact-info p {
+            margin: 10px 0;
+        }
+
+        .contact-icon {
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+    </style>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("ZAlYn63kodut_PKgu"); // Replace with your EmailJS public key
+        })();
+    </script>
+</head>
+<body>
+    <nav class="nav-bar">
+        <div class="nav-menu">
+            <a href="/" class="nav-item">Home</a>
+            <a href="/manual-input" class="nav-item">Manual Input</a>
+            <a href="/companion-search" class="nav-item">Companion Crops</a>
+            <a href="/about" class="nav-item">About</a>
+            <a href="/contact" class="nav-item">Contact</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="contact-card">
+            <h1>Contact Us</h1>
+            <form class="contact-form" id="contactForm">
+                <div class="form-group">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" name="subject" required>
+                </div>
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea id="message" name="message" required></textarea>
+                </div>
+                <button type="submit">Send Message</button>
+            </form>
+
+            <div class="contact-info">
+                <p><span class="contact-icon">📧</span> Email: 2022itb094.anurag@students.iiests.ac.in</p>
+                <p><span class="contact-icon">📞</span> Phone: +91 7367955402</p>
+                <p><span class="contact-icon">📍</span> Address: HOSTEL -15, IIEST Shibpur, Howrah, West Bengal, 711103</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const form = e.target;
+            const name = form.name.value;
+            const email = form.email.value;
+            const subject = form.subject.value;
+            const message = form.message.value;
+
+            try {
+                // Send email using EmailJS
+                await emailjs.send(
+                    "service_qe04ddy", // Replace with your EmailJS service ID
+                    "template_7ipik5m", // Replace with your EmailJS template ID
+                    {
+                        to_email: "2022itb094.anurag@students.iiests.ac.in",
+                        from_name: name,
+                        from_email: email,
+                        subject: subject,
+                        message: message
+                    }
+                );
+
+                // Create WhatsApp message
+                const whatsappMessage = encodeURIComponent(
+                    `*New Contact Form Message*\n\n` +
+                    `*From:* ${name}\n` +
+                    `*Email:* ${email}\n` +
+                    `*Subject:* ${subject}\n\n` +
+                    `*Message:*\n${message}`
+                );
+
+                // Open WhatsApp with pre-filled message
+                window.open(`https://wa.me/917367955402?text=${whatsappMessage}`);
+
+                alert('Message sent successfully! Check your email and WhatsApp.');
+                form.reset();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to send message. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

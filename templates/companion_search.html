@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Companion Crops Search - Crop Recommender</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2E7D32;
+            --primary-light: #4CAF50;
+            --primary-dark: #1B5E20;
+            --accent-color: #FDD835;
+            --text-primary: #1A1A1A;
+            --text-secondary: #666666;
+            --glass-bg: rgba(255, 255, 255, 0.8);
+            --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-size: cover;
+            background-position: center;
+            transition: all 0.5s ease;
+        }
+
+        .day {
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.3),
+                rgba(0, 0, 0, 0.3)
+            ), url('/static/images/farm-day.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        .night {
+            background: linear-gradient(
+                rgba(0, 0, 0, 0.5),
+                rgba(0, 0, 0, 0.5)
+            ), url('/static/images/farm-night.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        /* Navigation Styles */
+        .nav-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 0;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-menu {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+        }
+
+        .nav-item {
+            position: relative;
+            color: white;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 8px 15px;
+            transition: var(--transition);
+        }
+
+        .nav-item:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 50%;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover:after {
+            width: 100%;
+            left: 0;
+        }
+
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            min-width: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 12px 20px;
+            color: white;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Main Content Styles */
+        .companion-container {
+            max-width: 1000px;
+            margin: 100px auto 40px;
+            padding: 0 30px;
+        }
+
+        .header-dashboard {
+            text-align: center;
+            padding: 40px;
+            margin-bottom: 40px;
+            background: var(--glass-bg);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-dashboard h1 {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.8em;
+            color: var(--primary-dark);
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .header-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2em;
+            margin-top: 15px;
+            font-weight: 400;
+        }
+
+        .search-section {
+            background: var(--glass-bg);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #E0E0E0;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-family: 'Inter', sans-serif;
+            transition: var(--transition);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: block;
+            margin: 0 auto;
+            min-width: 200px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(46, 125, 50, 0.25);
+        }
+
+        #result {
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: none;
+        }
+
+        #result h3 {
+            color: var(--primary-dark);
+            margin-top: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        #result ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #result li {
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            transition: var(--transition);
+        }
+
+        #result li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .companion-container {
+                margin-top: 80px;
+                padding: 0 20px;
+            }
+
+            .header-dashboard h1 {
+                font-size: 2.2em;
+            }
+
+            .search-section {
+                padding: 20px;
+            }
+
+            .btn-primary {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="background" class="background-container day"></div>
+
+    <nav class="nav-container">
+        <div class="nav-menu">
+            <a href="/" class="nav-item">Home</a>
+            <div class="dropdown">
+                <a class="nav-item">Recommendations ▾</a>
+                <div class="dropdown-content">
+                    <a href="/manual-input" class="dropdown-item">Manual Input</a>
+                    <a href="/location" class="dropdown-item">Location Based</a>
+                </div>
+            </div>
+            <a href="/companion-search" class="nav-item">Companion Crops</a>
+            <a href="/about" class="nav-item">About</a>
+            <a href="/contact" class="nav-item">Contact</a>
+        </div>
+    </nav>
+
+    <div class="companion-container">
+        <div class="header-dashboard">
+            <h1>Companion Crops Search</h1>
+            <div class="header-subtitle">Discover which crops grow well together based on similar conditions</div>
+        </div>
+
+        <div class="search-section">
+            <div class="input-group">
+                <input type="text" id="cropName" placeholder="Enter crop name (e.g., rice, wheat, maize)" required>
+            </div>
+            <button class="btn-primary" onclick="findCompanionCrops()">Search Companion Crops 🌱</button>
+        </div>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        async function findCompanionCrops() {
+            const cropName = document.getElementById('cropName').value;
+            if (!cropName.trim()) {
+                alert('Please enter a crop name');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/companion-crops', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ crop: cropName })
+                });
+
+                const data = await response.json();
+                const resultDiv = document.getElementById('result');
+                resultDiv.style.display = 'block';
+                
+                if (data.error) {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                } else {
+                    let html = `<h3>Companion Crops for ${data.input_crop}</h3>`;
+                    if (data.companion_crops.length > 0) {
+                        html += '<ul style="list-style-type: none; padding: 0;">';
+                        data.companion_crops.forEach((crop, index) => {
+                            html += `<li style="padding: 15px; margin: 10px 0; background: rgba(255, 255, 255, 0.9); border-radius: 10px;">
+                                ${index + 1}. ${crop}</li>`;
+                        });
+                        html += '</ul>';
+                    } else if (data.growing_conditions) {
+                        html += `<p><em>${data.growing_conditions}</em></p>`;
+                    }
+                    resultDiv.innerHTML = html;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = 
+                    `<p style="color: red;">Error: Failed to find companion crops</p>`;
+            }
+        }
+
+        function updateBackground() {
+            const hour = new Date().getHours();
+            const bg = document.getElementById('background');
+            bg.className = `background-container ${hour >= 6 && hour < 18 ? 'day' : 'night'}`;
+        }
+
+        updateBackground();
+        setInterval(updateBackground, 60000);
+    </script>
+</body>
+</html>
